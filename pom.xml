@@ -22,9 +22,10 @@
     </modules>
 
     <properties>
+        <java.version>1.8</java.version>
         <spring-cloud.version>Hoxton.SR2</spring-cloud.version>
         <spring-cloud-alibaba.version>2.1.0.RELEASE</spring-cloud-alibaba.version>
-        <mybatisplus.version>3.3.1.tmp</mybatisplus.version>
+        <mybatisplus.version>3.4.1</mybatisplus.version>
         <mysql.version>5.1.46</mysql.version>
         <swagger.version>2.9.2</swagger.version>
         <lombok.version>1.18.8</lombok.version>
