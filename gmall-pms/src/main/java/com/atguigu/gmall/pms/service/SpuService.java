@@ -17,5 +17,7 @@ import java.util.Map;
 public interface SpuService extends IService<SpuEntity> {
 
     PageResultVo queryPage(PageParamVo paramVo);
+
+    PageResultVo querySpuByCidAndPage(Long cid, PageParamVo paramVo);
 }
 
