@@ -43,7 +43,7 @@ public class SkuBoundsServiceImpl extends ServiceImpl<SkuBoundsMapper, SkuBounds
         return new PageResultVo(page);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveSales(SkuSaleVo skuSaleVo) {
         // 3.1. 保存sku的积分优惠：sms_sku_bounds
