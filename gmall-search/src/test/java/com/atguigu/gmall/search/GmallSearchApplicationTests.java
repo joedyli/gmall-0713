@@ -38,8 +38,8 @@ class GmallSearchApplicationTests {
 
     @Test
     void contextLoads() {
-//        this.restTemplate.createIndex(Goods.class);
-//        this.restTemplate.putMapping(Goods.class);
+        this.restTemplate.createIndex(Goods.class);
+        this.restTemplate.putMapping(Goods.class);
 
         Integer pageNum = 1;
         Integer pageSize = 100;

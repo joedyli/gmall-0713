@@ -33,7 +33,7 @@ public class Goods {
     @Field(type = FieldType.Date)
     private Date createTime; // 新品所需字段
     @Field(type = FieldType.Boolean)
-    private Boolean store; // 是否有货
+    private Boolean store = false; // 是否有货
 
     // 过滤字段
     // 品牌相关字段
