@@ -282,6 +282,9 @@ public class SearchService {
                                 .subAggregation(AggregationBuilders.terms("attrValueAgg").field("searchAttrs.attrValue")))
         );
 
+        // 6. 结果集过滤
+        sourceBuilder.fetchSource(new String[]{"skuId", "defaultImage", "title", "subTitle", "price"}, null);
+
         System.out.println(sourceBuilder);
         return sourceBuilder;
     }
