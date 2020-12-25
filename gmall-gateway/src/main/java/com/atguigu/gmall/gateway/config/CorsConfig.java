@@ -16,6 +16,8 @@ public class CorsConfig {
         // 允许跨域的域名，可以写*，*代表所有域名，但是不能携带cookie
         corsConfiguration.addAllowedOrigin("http://manager.gmall.com");
         corsConfiguration.addAllowedOrigin("http://localhost:1000");
+        corsConfiguration.addAllowedOrigin("http://www.gmall.com");
+        corsConfiguration.addAllowedOrigin("http://gmall.com");
         // 允许跨域请求的方法
         corsConfiguration.addAllowedMethod("*");
         // 允许携带的头信息
