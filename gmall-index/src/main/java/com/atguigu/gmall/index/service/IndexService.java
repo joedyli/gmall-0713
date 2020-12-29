@@ -2,6 +2,7 @@ package com.atguigu.gmall.index.service;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.common.bean.ResponseVo;
+import com.atguigu.gmall.index.aspect.GmallCache;
 import com.atguigu.gmall.index.feign.GmallPmsClient;
 import com.atguigu.gmall.index.tools.DistributedLock;
 import com.atguigu.gmall.pms.entity.CategoryEntity;
@@ -15,6 +16,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.security.Key;
@@ -34,7 +36,7 @@ public class IndexService {
     @Autowired
     private GmallPmsClient pmsClient;
 
-    private static final String KEY_PREFIX = "index:cates:";
+    private static final String KEY_PREFIX = "index:cates";
 
     @Autowired
     private DistributedLock distributedLock;
@@ -49,11 +51,32 @@ public class IndexService {
         return responseVo.getData();
     }
 
+    @GmallCache(prefix = KEY_PREFIX, timeout = 43200, random = 4320, lock = "index:lock")
     public List<CategoryEntity> queryLvl2CategoriesWithSubByPid(Long pid) {
+        ResponseVo<List<CategoryEntity>> listResponseVo = this.pmsClient.queryCategoriesWithSubsByPid(pid);
+        List<CategoryEntity> data = listResponseVo.getData();
+        return data;
+    }
+
+    public List<CategoryEntity> queryLvl2CategoriesWithSubByPid2(Long pid) {
+
         // 1.先查询缓存
         String json = this.redisTemplate.opsForValue().get(KEY_PREFIX + pid);
-        if (StringUtils.isNotBlank(json) || !StringUtils.equals("null", json)){
+        if (StringUtils.isNotBlank(json) && !StringUtils.equals("null", json)){
             return JSON.parseArray(json, CategoryEntity.class);
+        } else if(StringUtils.equals("null", json)){
+            return null;
+        }
+
+        RLock lock = this.redissonClient.getLock("index:lock:" + pid);
+        lock.lock();
+
+        // 获取锁过程中可能有其他请求，已经提前获取到锁，并把数据放入缓存中
+        String json2 = this.redisTemplate.opsForValue().get(KEY_PREFIX + pid);
+        if (StringUtils.isNotBlank(json2) && !StringUtils.equals("null", json2)){
+            return JSON.parseArray(json2, CategoryEntity.class);
+        } else if(StringUtils.equals("null", json2)){
+            return null;
         }
 
         ResponseVo<List<CategoryEntity>> listResponseVo = this.pmsClient.queryCategoriesWithSubsByPid(pid);
