@@ -134,7 +134,7 @@
 							<!--左右按钮-->
 							<div class="items">
 								<ul>
-									<li th:each="image : *{images}">
+									<li th:each="image : *{skuImages}">
 										<img th:src="${image.url}" th:bimg="${image.url}" onmousemove="preview(this)" />
 									</li>
 								</ul>
@@ -500,9 +500,9 @@
 							<div id="two" class="tab-pane">
                                 <div class="Ptable">
                                     <div class="Ptable-item" th:each="group : *{groups}">
-                                        <h3 th:text="${group.groupName}">主体</h3>
+                                        <h3 th:text="${group.name}">主体</h3>
                                         <dl>
-                                            <div th:each="attr : ${group.attrValues}">
+                                            <div th:each="attr : ${group.attrs}">
                                                 <dt th:text="${attr.attrName}">品牌</dt><dd th:text="${attr.attrValue}">华为（HUAWEI）</dd>
                                             </div>
                                         </dl>
@@ -971,7 +971,7 @@
 			data: {
 				saleAttrs: [[${itemVo.saleAttrs}]], // 销售属性可选项
 				saleAttr: [[${itemVo.saleAttr}]],
-				skuJsons: JSON.parse(decodeURI([[${itemVo.skuJsons}]])), // 销售属性和skuId的关系
+				skuJsons: JSON.parse(decodeURI([[${itemVo.skusJson}]])), // 销售属性和skuId的关系
 				skuId: [[${itemVo.skuId}]],
 				count: 1
 			},

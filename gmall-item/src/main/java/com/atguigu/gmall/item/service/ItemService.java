@@ -15,9 +15,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 import sun.java2d.pipe.SpanIterator;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -39,6 +44,9 @@ public class ItemService {
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
+
+    @Autowired
+    private TemplateEngine templateEngine;
 
     public ItemVo loadData(Long skuId) {
         ItemVo itemVo = new ItemVo();
@@ -150,9 +158,29 @@ public class ItemService {
         }, threadPoolExecutor);
 
         CompletableFuture.allOf(catesFuture, brandFuture, spuFuture, imagesFuture, salesFuture, wareFuture,
-                saleAttrsFuture, skuAttrFuture, mappingFuture, descFuture, groupFuture);
+                saleAttrsFuture, skuAttrFuture, mappingFuture, descFuture, groupFuture).join();
 
         return itemVo;
+    }
+
+    private void createHtml(Long skuId){
+        ItemVo itemVo = this.loadData(skuId);
+        // 上下文对象的初始化
+        Context context = new Context();
+        // 页面静态化所需要的数据模型
+        context.setVariable("itemVo", itemVo);
+
+        try (PrintWriter printWriter = new PrintWriter(new File("D:\\project-0713\\html\\" + skuId + ".html"))) {
+            //  通过thymeleaf提供的模板引擎进行模板的静态化
+            // 1-模板的视图名称 2-thymeleaf的上下文对象 3-文件流
+            templateEngine.process("item", context, printWriter);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void asyncExecute(Long skuId){
+        threadPoolExecutor.execute(() -> createHtml(skuId));
     }
 }
 
