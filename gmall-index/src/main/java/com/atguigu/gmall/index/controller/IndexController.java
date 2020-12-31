@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @Controller
@@ -20,7 +21,8 @@ public class IndexController {
     private IndexService indexService;
 
     @GetMapping({"index.html", "/"})
-    public String toIndex(Model model){
+    public String toIndex(Model model, HttpServletRequest request){
+        System.out.println(request.getHeader("userId") + "==================================");
 
         // 三级分类数据
         List<CategoryEntity> categoryEntities = this.indexService.queryLvl1CategoriesByPid();
