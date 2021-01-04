@@ -1,0 +1,37 @@
+server:
+  port: 18090
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+    sentinel:
+      transport:
+        dashboard: localhost:8080
+        port: 8719
+  zipkin:
+    base-url: http://localhost:9411
+    discovery-client-enabled: true
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1
+  thymeleaf:
+    cache: false
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://172.16.116.100:3306/guli_cart
+    username: root
+    password: root
+  redis:
+    host: 172.16.116.100
+feign:
+  sentinel:
+    enabled: true
+auth:
+  jwt:
+    pubKeyPath: D:\project-0713\rsa\rsa.pub
+    cookieName: GMALL-TOKEN
+    userKey: user-key
+    expire: 15552000

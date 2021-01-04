@@ -49,7 +49,7 @@ public class AuthGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthG
                 // 1.判断请求在不在拦截名单之中，不在直接放行
                 List<String> pathes = config.pathes;// 拦截名单
                 String curPath = request.getURI().getPath();// 获取了当前请求的路径
-                if (CollectionUtils.isEmpty(pathes)){
+                if (!CollectionUtils.isEmpty(pathes)){
                     // 如果名单中所有路径都不满足，直接放行
                     if (!pathes.stream().anyMatch(path -> curPath.startsWith(path))){
                         return chain.filter(exchange);
