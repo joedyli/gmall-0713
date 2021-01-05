@@ -61,7 +61,7 @@ public class AuthGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthG
                 if (StringUtils.isBlank(token)){
                     // 如果从头信息中没有获取到token，尝试从cookie中获取token信息
                     MultiValueMap<String, HttpCookie> cookies = request.getCookies();
-                    if (!CollectionUtils.isEmpty(cookies)){
+                    if (!CollectionUtils.isEmpty(cookies) && cookies.containsKey(properties.getCookieName())){
                         HttpCookie cookie = cookies.getFirst(properties.getCookieName());
                         token = cookie.getValue();
                     }

@@ -26,6 +26,28 @@ spring:
     password: root
   redis:
     host: 172.16.116.100
+  task:
+    execution:
+      thread-name-prefix: cart-async-
+      pool:
+        core-size: 100
+        max-size: 500
+        queue-capacity: 1000
+        keep-alive: 60s
+        allow-core-thread-timeout: false
+      shutdown:
+        await-termination: true
+        await-termination-period: 60
+  rabbitmq:
+    host: 172.16.116.100
+    virtual-host: /fengge
+    username: fengge
+    password: fengge
+    listener:
+      simple:
+        prefetch: 1
+        concurrency: 3
+        acknowledge-mode: manual
 feign:
   sentinel:
     enabled: true
@@ -35,3 +57,7 @@ auth:
     cookieName: GMALL-TOKEN
     userKey: user-key
     expire: 15552000
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: auto
