@@ -101,7 +101,7 @@ public class CartService {
             }
 
             // 保存到redis和mysql
-            this.cartAsyncService.insertCart(cart);
+            this.cartAsyncService.insertCart(userId, cart);
 
             // 给购物车对应商品添加实时价格缓存
             this.redisTemplate.opsForValue().set(PRICE_PREFIX + skuId, skuEntity.getPrice().toString());
@@ -208,7 +208,7 @@ public class CartService {
                     // 把之前的userKey更新为userId
                     cart.setUserId(userId.toString());
                     // 异步写入到mysql
-                    this.cartAsyncService.insertCart(cart);
+                    this.cartAsyncService.insertCart(userId.toString(), cart);
                 }
                 // 同步写入到redis
                 loginHashOps.put(skuId, JSON.toJSONString(cart));
@@ -262,5 +262,17 @@ public class CartService {
 
         hashOps.delete(skuId.toString());
         this.cartAsyncService.deleteCart(userId, skuId);
+    }
+
+    public List<Cart> queryCheckedCartsByUserId(Long userId) {
+        String key = KEY_PREFIX + userId;
+
+        BoundHashOperations<String, Object, Object> hashOps = this.redisTemplate.boundHashOps(key);
+        List<Object> cartJsons = hashOps.values();
+        if (CollectionUtils.isEmpty(cartJsons)){
+            throw new CartException("该用户没有购物车记录");
+        }
+
+        return cartJsons.stream().map(cartJson -> JSON.parseObject(cartJson.toString(), Cart.class)).filter(Cart::getCheck).collect(Collectors.toList());
     }
 }
