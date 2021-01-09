@@ -9,6 +9,6 @@
     </update>
 
     <select id="check" resultType="com.atguigu.gmall.wms.entity.WareSkuEntity">
-        select * from wms_ware_sku where sku_id=#{skuId} and stock-stock_locked>#{count} for update
+        select * from wms_ware_sku where sku_id=#{skuId} and stock-stock_locked>#{count}
     </select>
 </mapper>

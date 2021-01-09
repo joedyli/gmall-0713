@@ -1,5 +1,6 @@
 package com.atguigu.gmall.order.service;
 
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.cart.pojo.Cart;
 import com.atguigu.gmall.cart.pojo.UserInfo;
 import com.atguigu.gmall.common.bean.ResponseVo;
@@ -17,16 +18,18 @@ import com.atguigu.gmall.sms.vo.ItemSaleVo;
 import com.atguigu.gmall.ums.entity.UserAddressEntity;
 import com.atguigu.gmall.ums.entity.UserEntity;
 import com.atguigu.gmall.wms.entity.WareSkuEntity;
+import com.atguigu.gmall.wms.vo.SkuLockVo;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Arrays;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +51,13 @@ public class OrderService {
     private GmallCartClient cartClient;
 
     @Autowired
+    private GmallOmsClient omsClient;
+
+    @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     private static final String KEY_PREFIX = "order:token:";
 
@@ -136,13 +145,62 @@ public class OrderService {
         }
 
         // 2.验总价
+        List<OrderItemVo> items = submitVo.getItems(); // 获取订单确认页提交的送货清单
+        if (CollectionUtils.isEmpty(items)){
+            throw new OrderException("请选择要购买的商品");
+        }
+        BigDecimal totalPrice = submitVo.getTotalPrice(); // 页面传递的总价格
+        // 获取数据库中的实时总价格
+        BigDecimal currentTotalPrice = items.stream().map(item -> {
+            ResponseVo<SkuEntity> skuEntityResponseVo = this.pmsClient.querySkuById(item.getSkuId()); // 查询数据库中商品的实时价格
+            SkuEntity skuEntity = skuEntityResponseVo.getData();
+            if (skuEntity == null) {
+                return new BigDecimal(0);
+            }
+            return skuEntity.getPrice().multiply(item.getCount()); // 返回每条记录的小计
+        }).reduce((a, b) -> a.add(b)).get();
+        if (totalPrice.compareTo(currentTotalPrice) != 0){
+            throw new OrderException("页面已过期，请刷新后再试！");
+        }
 
         // 3.验库存并锁定库存
+        List<SkuLockVo> lockVos = items.stream().map(item -> { // 把送货清单集合转化为skuLockVo集合
+            SkuLockVo skuLockVo = new SkuLockVo();
+            skuLockVo.setSkuId(item.getSkuId());
+            skuLockVo.setCount(item.getCount().intValue());
+            return skuLockVo;
+        }).collect(Collectors.toList());
+        ResponseVo<List<SkuLockVo>> skuLockResponseVo = this.wmsClient.checkAndLock(lockVos, orderToken);
+        List<SkuLockVo> skuLockVos = skuLockResponseVo.getData();
+        // 如果验库存锁库存的返回值不为空，说明验库存和锁库存失败，提示锁定信息
+        if (!CollectionUtils.isEmpty(skuLockVos)){
+            throw new OrderException(JSON.toJSONString(skuLockVos));
+        }
+
+//        int i = 1/0;
 
         // 4.创建订单
+        OrderEntity orderEntity = null;
+        UserInfo userInfo = LoginInterceptor.getUserInfo();
+        try {
+            ResponseVo<OrderEntity> orderEntityResponseVo = this.omsClient.saveOrder(submitVo, userInfo.getUserId());
+            orderEntity = orderEntityResponseVo.getData();
+            this.rabbitTemplate.convertAndSend("ORDER_EXCHANGE", "order.ttl", orderToken);
+        } catch (Exception e) {
+            //e.printStackTrace();
+            // 不管什么异常，直接发送消息给OMS更新订单状态，订单存在更新为无效订单，订单不存在影响条数为0
+            this.rabbitTemplate.convertAndSend("ORDER_EXCHANGE", "order.disable", orderToken);
+            throw new OrderException("创建订单失败，请联系运行人员。");
+        }
 
         // 5.删除购物车中的对应记录
+        Map<String, Object> map = new HashMap<>();
+        map.put("userId", userInfo.getUserId());
+        // 获取送货清单中所有商品的skuId
+        List<Long> skuIds = items.stream().map(OrderItemVo::getSkuId).collect(Collectors.toList());
+        map.put("skuIds", JSON.toJSONString(skuIds));
+        this.rabbitTemplate.convertAndSend("ORDER_EXCHANGE", "cart.delete", map);
 
-        return null;
+        return orderEntity;
     }
 }

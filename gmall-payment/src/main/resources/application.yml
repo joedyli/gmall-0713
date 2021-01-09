@@ -1,5 +1,5 @@
 server:
-  port: 18092
+  port: 18093
 spring:
   cloud:
     nacos:
@@ -19,8 +19,6 @@ spring:
       probability: 1
   thymeleaf:
     cache: false
-  redis:
-    host: 172.16.116.100
   rabbitmq:
     host: 172.16.116.100
     virtual-host: /fengge

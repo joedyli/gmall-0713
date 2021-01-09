@@ -20,9 +20,11 @@ import com.atguigu.gmall.common.bean.PageParamVo;
 import com.atguigu.gmall.oms.mapper.OrderMapper;
 import com.atguigu.gmall.oms.entity.OrderEntity;
 import com.atguigu.gmall.oms.service.OrderService;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 @Service("orderService")
@@ -44,6 +46,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         return new PageResultVo(page);
     }
 
+    @Transactional
     @Override
     public OrderEntity saveOrder(OrderSubmitVo submitVo, Long userId) {
         // 1.保存oms_order
@@ -113,7 +116,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
 
             this.itemMapper.insert(itemEntity);
         });
-
+//        int i = 1/0;
 
         return orderEntity;
     }
