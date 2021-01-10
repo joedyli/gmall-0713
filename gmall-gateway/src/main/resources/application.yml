@@ -65,6 +65,10 @@ spring:
             - Host=payment.gmall.com
           filters:
             - Auth=/
+        - id: payment-route2
+          uri: lb://payment-service
+          predicates:
+            - Path=/pay/**
 auth:
   jwt:
     pubKeyPath: D:\project-0713\rsa\rsa.pub

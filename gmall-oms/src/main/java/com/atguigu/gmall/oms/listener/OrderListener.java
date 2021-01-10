@@ -62,4 +62,26 @@ public class OrderListener {
         // 最后确认消息
         channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
     }
+
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "OMS_SUCCESS_QUEUE", durable = "true"),
+            exchange = @Exchange(value = "ORDER_EXCHANGE", ignoreDeclarationExceptions = "true", type = ExchangeTypes.TOPIC),
+            key = {"order.success"}
+    ))
+    public void successOrder(String orderToken, Message message, Channel channel) throws IOException {
+        if (StringUtils.isBlank(orderToken)){
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+            return ;
+        }
+
+        // 更新订单状态为无效订单
+        if (this.orderMapper.updateStatus(orderToken, 1, 0) == 1) {
+            // 发送消息给wms减库存
+            this.rabbitTemplate.convertAndSend("ORDER_EXCHANGE", "stock.minus", orderToken);
+            // TODO：发送消息给用户加积分userId integration growth
+        }
+
+        // 最后确认消息
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+    }
 }

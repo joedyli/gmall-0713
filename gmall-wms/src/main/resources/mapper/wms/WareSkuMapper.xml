@@ -7,6 +7,9 @@
     <update id="unlock">
         update wms_ware_sku set stock_locked=stock_locked-#{count} where id=#{id}
     </update>
+    <update id="minus">
+        update wms_ware_sku set stock = stock - #{count}, stock_locked = stock_locked - #{count}, sales = sales + #{count} where id = #{id}
+    </update>
 
     <select id="check" resultType="com.atguigu.gmall.wms.entity.WareSkuEntity">
         select * from wms_ware_sku where sku_id=#{skuId} and stock-stock_locked>#{count}
